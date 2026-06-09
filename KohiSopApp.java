@@ -29,29 +29,22 @@ public class KohiSopApp implements WarnaTerminal {
             }
 
             Member currentMember = null;
-            System.out.print("\nApakah ini pembelian pertama / ingin daftar member? (Y/N): ");
-            String isFirst = sc.nextLine().trim();
-            if (isFirst.equalsIgnoreCase("Y")) {
-                System.out.print("Masukkan nama Anda: ");
-                String nama = sc.nextLine().trim();
-                currentMember = membershipManager.registerMember(nama);
-                System.out.println(GREEN + "Member berhasil didaftarkan! Kode Anda: " + currentMember.getKode() + RESET);
-            } else {
-                System.out.print("Punya kode member? (Masukkan kode / ketik '-' jika tidak punya): ");
+            System.out.print("\nApakah Anda memiliki kode member? (Y/N): ");
+            String punyaMember = sc.nextLine().trim();
+            if (punyaMember.equalsIgnoreCase("Y")) {
+                System.out.print("Masukkan kode member Anda: ");
                 String kodeInput = sc.nextLine().trim();
-                if (!kodeInput.equals("-")) {
-                    currentMember = membershipManager.findMember(kodeInput);
-                    if (currentMember != null) {
-                        System.out.println(GREEN + "Selamat datang kembali, " + currentMember.getNama() + "! Poin Anda saat ini: " + currentMember.getPoin() + RESET);
-                    } else {
-                        System.out.println(RED + "Member tidak ditemukan. Melanjutkan sebagai non-member." + RESET);
-                    }
+                currentMember = membershipManager.findMember(kodeInput);
+                if (currentMember != null) {
+                    System.out.println(GREEN + "Selamat datang kembali, " + currentMember.getNama() + "! Poin Anda saat ini: " + currentMember.getPoin() + RESET);
+                } else {
+                    System.out.println(RED + "Member tidak ditemukan. Transaksi dilanjutkan sebagai non-member." + RESET);
                 }
             }
 
             checkoutManager.tampilkanRincianPesanan(orderManager.getPesananUser(), false, currentMember);
 
-            checkoutManager.prosesTransaksiFinal(sc, orderManager.getPesananUser(), currentMember);
+            checkoutManager.prosesTransaksiFinal(sc, orderManager.getPesananUser(), currentMember, membershipManager);
 
             allKitchenOrders.addAll(orderManager.getPesananUser());
         }

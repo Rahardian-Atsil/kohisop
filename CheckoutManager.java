@@ -126,8 +126,7 @@ public class CheckoutManager implements WarnaTerminal {
         }
     }
 
-    public void prosesTransaksiFinal(Scanner sc, List<OrderItem> pesananUser, Member member) {
-        
+    public void prosesTransaksiFinal(Scanner sc, List<OrderItem> pesananUser, Member member, MembershipManager membershipManager) {
         int poinAwal = (member != null) ? member.getPoin() : 0;
         
         double totalSebelumPajakDiskonIDR = 0, totalPajakIDR = 0;
@@ -151,7 +150,6 @@ public class CheckoutManager implements WarnaTerminal {
         System.out.printf("Kalkulasi Biaya Admin         : + IDR %.2f\n", admin);
         System.out.printf("Total Setelah Channel         : IDR %.2f\n", totalSetelahPajakDiskonIDR);
 
-        
         CurrencyConverter mataUang = pilihMataUang(sc);
 
         double poinDigunakan = 0;
@@ -200,7 +198,6 @@ public class CheckoutManager implements WarnaTerminal {
         System.out.printf("TOTAL TAGIHAN SEMENTARA: %.2f %s\n", tagihanValas, simbol);
         System.out.println("=========================================");
 
-        
         int attempts = 0;
         double bayar = 0;
         boolean success = false;
@@ -236,24 +233,38 @@ public class CheckoutManager implements WarnaTerminal {
             System.exit(0);
         }
 
-        
+        Member finalMember = member; 
+        int poinAwalCetak = poinAwal;
+
+        if (member == null) {
+            System.out.println();
+            System.out.print("Apakah Anda ingin mendaftar menjadi member KohiSop? (Y/N): ");
+            String daftar = sc.nextLine().trim();
+            if (daftar.equalsIgnoreCase("Y")) {
+                System.out.print("Masukkan nama Anda: ");
+                String nama = sc.nextLine().trim();
+                finalMember = membershipManager.registerMember(nama);
+                poinAwalCetak = 0; 
+                System.out.println(GREEN + "Pendaftaran Berhasil! Kode Member Anda: " + finalMember.getKode() + RESET);
+            }
+        }
+
         int poinDapat = 0;
-        if (member != null) {
+        if (finalMember != null) {
             int totalQty = 0;
             for(OrderItem item : pesananUser) totalQty += item.getQty();
             poinDapat = totalQty / 10;
             
             if (poinDapat > 0) {
-                if (member.getKode().toUpperCase().contains("A")) {
+                if (finalMember.getKode().toUpperCase().contains("A")) {
                     poinDapat *= 2; 
                     System.out.println(YELLOW + "\n[BONUS MEMBERSHIP] Kode member Anda mengandung huruf 'A'. Poin yang diperoleh DIGANDAKAN!" + RESET);
                 }
-                member.tambahPoin(poinDapat);
-                System.out.println(YELLOW + "Selamat! Anda mendapatkan " + poinDapat + " poin baru dari transaksi ini!" + RESET);
+                finalMember.tambahPoin(poinDapat);
+                System.out.println(YELLOW + "Selamat! Anda mendapatkan " + poinDapat + " poin dari transaksi ini!" + RESET);
             }
         }
 
-        
         String formatKotak82 = "%-82s";
         String garisBatas = "==================================================================================";
 
@@ -262,6 +273,7 @@ public class CheckoutManager implements WarnaTerminal {
         String headerSukses = "                               PEMBAYARAN SUKSES";
         System.out.printf(BG_WHITE + GREEN + String.format(formatKotak82, headerSukses) + RESET + "\n");
         System.out.printf(BG_WHITE + GREEN + String.format(formatKotak82, garisBatas) + RESET + "\n");
+
 
         tampilkanRincianPesanan(pesananUser, true, member);
 
@@ -301,17 +313,16 @@ public class CheckoutManager implements WarnaTerminal {
             System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, strKembali) + RESET + "\n");
         }
 
-        
-        if (member != null) {
+        if (finalMember != null) {
             System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "") + RESET + "\n");
             System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "--- INFORMASI MEMBERSHIP ---") + RESET + "\n");
-            System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "Nama Member   : " + member.getNama() + " (" + member.getKode() + ")") + RESET + "\n");
-            System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "Poin Awal     : " + poinAwal) + RESET + "\n");
+            System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "Nama Member   : " + finalMember.getNama() + " (" + finalMember.getKode() + ")") + RESET + "\n");
+            System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "Poin Awal     : " + poinAwalCetak) + RESET + "\n");
             if (poinDigunakan > 0) {
                 System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "Poin Terpakai : -" + (int)poinDigunakan) + RESET + "\n");
             }
             System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "Poin Didapat  : +" + poinDapat) + RESET + "\n");
-            System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "Poin Akhir    : " + member.getPoin()) + RESET + "\n");
+            System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "Poin Akhir    : " + finalMember.getPoin()) + RESET + "\n");
         }
 
         System.out.printf(BG_WHITE + BLACK_TEXT + String.format(formatKotak82, "") + RESET + "\n");
